@@ -1339,6 +1339,8 @@ try{ localStorage.removeItem('ah_photo_positions_v2'); }catch(e){}
   const continueBtn = document.getElementById('ctaModalContinue');
   const closeBtn = document.getElementById('ctaModalClose');
   let pendingUrl = null;
+  let pendingOrigem = null;
+  const track = (name, params) => { if(window.gtag) gtag('event', name, params); };
 
   function openModal(url){
     pendingUrl = url;
@@ -1354,12 +1356,19 @@ try{ localStorage.removeItem('ah_photo_positions_v2'); }catch(e){}
   document.querySelectorAll('a[href*="api.whatsapp.com"]').forEach(link=>{
     link.addEventListener('click', function(e){
       e.preventDefault();
+      // O pop-up impede o rastreio automático de cliques do GA4, então enviamos manualmente
+      const sec = this.closest('section[id], header, footer');
+      pendingOrigem = this.className || (sec && (sec.id || sec.tagName.toLowerCase())) || 'link';
+      track('clique_whatsapp', { origem: pendingOrigem });
       openModal(this.href);
     });
   });
 
   continueBtn.addEventListener('click', ()=>{
-    if(pendingUrl){ window.open(pendingUrl, '_blank', 'noopener'); }
+    if(pendingUrl){
+      track('generate_lead', { metodo: 'whatsapp', origem: pendingOrigem });
+      window.open(pendingUrl, '_blank', 'noopener');
+    }
     closeModal();
   });
   closeBtn.addEventListener('click', closeModal);
